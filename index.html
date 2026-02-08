@@ -16,6 +16,7 @@
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen p-4">
 
+    <!-- Auth Overlay -->
     <div id="auth-overlay">
         <div class="glass p-8 rounded-2xl w-full max-w-sm text-center shadow-2xl mx-4">
             <h2 class="text-xl font-bold text-blue-400 mb-4">🔐 SYSTEM LOCKED</h2>
@@ -24,6 +25,7 @@
         </div>
     </div>
 
+    <!-- Main Dashboard -->
     <div id="dashboard" class="w-full max-w-md space-y-6">
         <div class="glass p-8 rounded-2xl shadow-2xl">
             <h1 class="text-2xl font-bold text-center mb-1 text-blue-400">MADE BY F4X ADIL</h1>
@@ -42,6 +44,7 @@
             </div>
         </div>
 
+        <!-- Logs -->
         <div class="glass p-6 rounded-2xl shadow-xl">
             <h3 class="text-xs font-black text-gray-500 uppercase tracking-widest mb-4 flex justify-between items-center">
                 Recent Logs <span onclick="clearHistory()" class="text-red-500 cursor-pointer text-[10px] hover:underline">Clear All</span>
@@ -62,38 +65,43 @@
         }
 
         async function searchData() {
-    const phone = document.getElementById('phoneInput').value;
-    if(!phone) return alert("Enter a number!");
+            const phone = document.getElementById('phoneInput').value;
+            if(!phone) return alert("Enter a number!");
 
-    const btn = document.getElementById('searchBtn');
-    const resContent = document.getElementById('resContent');
-    
-    btn.innerText = "BYPASSING BLOCKS...";
-    btn.disabled = true;
+            const btn = document.getElementById('searchBtn');
+            const resDiv = document.getElementById('result');
+            
+            btn.innerText = "CONNECTING...";
+            btn.disabled = true;
+            resDiv.classList.add('hidden');
 
-    // IMPORTANT: We now call our OWN internal Vercel API
-    const localApi = `/api/lookup?phone=${phone}`;
+            // This now points to your local Vercel proxy
+            const apiURL = `/api/lookup?phone=${phone}`;
 
-    try {
-        const response = await fetch(localApi);
-        const data = await response.json();
+            try {
+                const response = await fetch(apiURL);
+                
+                if (!response.ok) throw new Error(`Server Error: ${response.status}`);
+                
+                const data = await response.json();
 
-        if(data && !data.error) {
-            const info = `👤 NAME: ${data.name || 'N/A'}\n🆔 CNIC: ${data.cnic || 'N/A'}\n🏠 ADDR: ${data.address || 'N/A'}`;
-            resContent.innerText = info;
-            document.getElementById('result').classList.remove('hidden');
-            saveToHistory(phone, data.name || "Unknown");
-        } else {
-            alert("No data found for this number.");
+                if(data && !data.error && (data.name || data.cnic)) {
+                    const info = `👤 NAME: ${data.name || 'N/A'}\n🆔 CNIC: ${data.cnic || 'N/A'}\n🏠 ADDR: ${data.address || 'N/A'}`;
+                    document.getElementById('resContent').innerText = info;
+                    resDiv.classList.remove('hidden');
+                    
+                    saveToHistory(phone, data.name || "Unknown");
+                } else {
+                    alert("No data found for this number.");
+                }
+            } catch (error) {
+                console.error(error);
+                alert("Error: " + error.message + "\nCheck if the API provider is down.");
+            } finally {
+                btn.innerText = "FETCH DETAILS";
+                btn.disabled = false;
+            }
         }
-    } catch (error) {
-        alert("Server Error: Check your Vercel logs.");
-    } finally {
-        btn.innerText = "FETCH DETAILS";
-        btn.disabled = false;
-    }
-}
-
 
         function saveToHistory(num, name) {
             let history = JSON.parse(localStorage.getItem('f4x_history') || "[]");
