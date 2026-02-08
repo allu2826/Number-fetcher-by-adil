@@ -12,6 +12,7 @@
         #dashboard { display: none; }
         .glow:focus { box-shadow: 0 0 15px #3b82f6; outline: none; }
         .history-item { background: rgba(255,255,255,0.05); border-left: 3px solid #3b82f6; }
+        .data-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 10px; margin-bottom: 10px; }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen p-4">
@@ -32,9 +33,125 @@
             <p class="text-gray-400 text-center text-[10px] mb-8 tracking-[0.2em] uppercase">Premium Data Interface</p>
             
             <div class="space-y-4">
-                <input id="phoneInput" type="text" placeholder="Enter Number (03XXXXXXXXX)" class="w-full p-4 rounded-lg bg-slate-900 border border-slate-700 text-white glow">
+                <input id="phoneInput" type="text" placeholder="Enter Number (92... or 03...)" class="w-full p-4 rounded-lg bg-slate-900 border border-slate-700 text-white glow">
                 <button id="searchBtn" onclick="searchData()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-lg shadow-lg">FETCH DETAILS</button>
             </div>
+
+            <div id="result" class="mt-8 hidden space-y-3">
+                <p class="text-[10px] text-blue-400 font-bold uppercase mb-2">Search Results Found</p>
+                <div id="resContent" class="space-y-3"></div>
+            </div>
+        </div>
+
+        <!-- History -->
+        <div class="glass p-6 rounded-2xl shadow-xl">
+            <h3 class="text-xs font-black text-gray-500 uppercase tracking-widest mb-4 flex justify-between items-center">
+                Recent Logs <span onclick="clearHistory()" class="text-red-500 cursor-pointer text-[10px] hover:underline">Clear All</span>
+            </h3>
+            <div id="historyList" class="space-y-2"></div>
+        </div>
+    </div>
+
+    <script>
+        const PASSWORD = "FREE";
+
+        function checkPass() {
+            if (document.getElementById('passInput').value === PASSWORD) {
+                document.getElementById('auth-overlay').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                renderHistory();
+            } else { alert("Access Denied"); }
+        }
+
+        async function searchData() {
+            const phone = document.getElementById('phoneInput').value.trim();
+            if(!phone) return alert("Enter a number!");
+
+            const btn = document.getElementById('searchBtn');
+            const resContainer = document.getElementById('result');
+            const resContent = document.getElementById('resContent');
+
+            btn.innerText = "CONNECTING...";
+            btn.disabled = true;
+            resContainer.classList.add('hidden');
+            resContent.innerHTML = "";
+
+            // Use direct API URL for testing, or use /api/lookup if you have vercel.json set up
+            const apiURL = `https://howler-database-api.vercel.app/api/lookup?phone=${phone}`;
+
+            try {
+                const response = await fetch(apiURL);
+                const data = await response.json();
+
+                // Check if the API returned success and has a result array
+                if (data.success && data.result && data.result.length > 0) {
+                    
+                    // Loop through all results (since your API returns multiple records)
+                    data.result.forEach((item, index) => {
+                        const card = document.createElement('div');
+                        card.className = "data-card";
+                        card.innerHTML = `
+                            <p class="text-blue-300 text-[10px] font-bold">RECORD #${index + 1}</p>
+                            <p class="text-sm mt-1">👤 <span class="text-gray-400">NAME:</span> ${item.name || 'N/A'}</p>
+                            <p class="text-sm">🆔 <span class="text-gray-400">CNIC:</span> ${item.cnic || 'N/A'}</p>
+                            <p class="text-sm">🏠 <span class="text-gray-400">ADDR:</span> ${item.address || 'N/A'}</p>
+                            <p class="text-xs text-gray-500 mt-1">📱 ${item.mobile || ''}</p>
+                        `;
+                        resContent.appendChild(card);
+                    });
+
+                    resContainer.classList.remove('hidden');
+                    saveToHistory(phone, data.result[0].name || "Found");
+                } else {
+                    alert("No data found for this number in the database.");
+                }
+            } catch (error) {
+                console.error(error);
+                alert("Connection Error. Please check if the API is working.");
+            } finally {
+                btn.innerText = "FETCH DETAILS";
+                btn.disabled = false;
+            }
+        }
+
+        function saveToHistory(num, name) {
+            let history = JSON.parse(localStorage.getItem('f4x_history') || "[]");
+            history.unshift({ num, name, time: new Date().toLocaleTimeString() });
+            if(history.length > 5) history.pop();
+            localStorage.setItem('f4x_history', JSON.stringify(history));
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('historyList');
+            const history = JSON.parse(localStorage.getItem('f4x_history') || "[]");
+            if(history.length === 0) {
+                list.innerHTML = `<p class="text-gray-600 text-xs italic">No logs found</p>`;
+                return;
+            }
+            list.innerHTML = history.map(item => `
+                <div class="history-item p-3 rounded-lg flex justify-between items-center">
+                    <div>
+                        <p class="text-white font-bold text-sm">${item.num}</p>
+                        <p class="text-gray-500 text-[9px] uppercase">${item.name}</p>
+                    </div>
+                    <button onclick="copyNum('${item.num}')" class="text-[10px] bg-slate-700 px-2 py-1 rounded hover:bg-blue-600 transition-colors">COPY</button>
+                </div>
+            `).join('');
+        }
+
+        function copyNum(num) {
+            navigator.clipboard.writeText(num);
+            alert("Number copied: " + num);
+        }
+
+        function clearHistory() {
+            localStorage.removeItem('f4x_history');
+            renderHistory();
+        }
+    </script>
+</body>
+</html>            </div>
 
             <div id="result" class="mt-8 hidden space-y-3">
                 <div class="p-4 bg-slate-800 rounded-xl border border-slate-700">
