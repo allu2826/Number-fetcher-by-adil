@@ -12,42 +12,44 @@
         #dashboard { display: none; }
         .glow:focus { box-shadow: 0 0 15px #3b82f6; outline: none; }
         .history-item { background: rgba(255,255,255,0.05); border-left: 3px solid #3b82f6; }
-        .data-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 10px; margin-bottom: 10px; }
+        .data-card { background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(59, 130, 246, 0.3); padding: 15px; border-radius: 12px; margin-bottom: 12px; }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen p-4">
 
-    <!-- Auth Overlay -->
+    <!-- Login Screen -->
     <div id="auth-overlay">
-        <div class="glass p-8 rounded-2xl w-full max-w-sm text-center shadow-2xl mx-4">
+        <div class="glass p-8 rounded-2xl w-full max-sm:max-w-[90%] max-w-sm text-center shadow-2xl">
             <h2 class="text-xl font-bold text-blue-400 mb-4">🔐 SYSTEM LOCKED</h2>
             <input id="passInput" type="password" placeholder="Enter Password..." class="w-full p-4 rounded-lg bg-slate-900 border border-slate-700 text-white text-center mb-4 glow">
-            <button onclick="checkPass()" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-lg font-bold">UNLOCK ACCESS</button>
+            <button onclick="checkPass()" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-lg font-bold transition-all">UNLOCK ACCESS</button>
         </div>
     </div>
 
     <!-- Main Dashboard -->
     <div id="dashboard" class="w-full max-w-md space-y-6">
         <div class="glass p-8 rounded-2xl shadow-2xl">
-            <h1 class="text-2xl font-bold text-center mb-1 text-blue-400">MADE BY F4X ADIL</h1>
-            <p class="text-gray-400 text-center text-[10px] mb-8 tracking-[0.2em] uppercase">Premium Data Interface</p>
+            <h1 class="text-2xl font-bold text-center mb-1 text-blue-400 uppercase tracking-tighter">MADE BY F4X ADIL</h1>
+            <p class="text-gray-400 text-center text-[10px] mb-8 tracking-[0.3em] uppercase opacity-50">Premium Data Interface</p>
             
             <div class="space-y-4">
                 <input id="phoneInput" type="text" placeholder="Enter Number (92... or 03...)" class="w-full p-4 rounded-lg bg-slate-900 border border-slate-700 text-white glow">
-                <button id="searchBtn" onclick="searchData()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-lg shadow-lg">FETCH DETAILS</button>
+                <button id="searchBtn" onclick="searchData()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-lg shadow-lg active:scale-95 transition-all">FETCH DETAILS</button>
             </div>
 
-            <div id="result" class="mt-8 hidden space-y-3">
-                <p class="text-[10px] text-blue-400 font-bold uppercase mb-2">Search Results Found</p>
+            <!-- Result Area -->
+            <div id="result" class="mt-8 hidden">
+                <p class="text-[10px] text-blue-400 font-black uppercase mb-3 tracking-widest">Results Found</p>
                 <div id="resContent" class="space-y-3"></div>
             </div>
         </div>
 
-        <!-- History -->
+        <!-- Single Recent Logs Box -->
         <div class="glass p-6 rounded-2xl shadow-xl">
-            <h3 class="text-xs font-black text-gray-500 uppercase tracking-widest mb-4 flex justify-between items-center">
-                Recent Logs <span onclick="clearHistory()" class="text-red-500 cursor-pointer text-[10px] hover:underline">Clear All</span>
-            </h3>
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xs font-black text-gray-500 uppercase tracking-widest">Recent Logs</h3>
+                <span onclick="clearHistory()" class="text-red-500 cursor-pointer text-[10px] hover:underline uppercase font-bold">Clear All</span>
+            </div>
             <div id="historyList" class="space-y-2"></div>
         </div>
     </div>
@@ -65,7 +67,7 @@
 
         async function searchData() {
             const phone = document.getElementById('phoneInput').value.trim();
-            if(!phone) return alert("Enter a number!");
+            if(!phone) return alert("Please enter a number!");
 
             const btn = document.getElementById('searchBtn');
             const resContainer = document.getElementById('result');
@@ -76,26 +78,27 @@
             resContainer.classList.add('hidden');
             resContent.innerHTML = "";
 
-            // Use direct API URL for testing, or use /api/lookup if you have vercel.json set up
-            const apiURL = `https://howler-database-api.vercel.app/api/lookup?phone=${phone}`;
+            // IMPORTANT: Calling the local proxy /api/lookup fixed in vercel.json
+            const apiURL = `/api/lookup?phone=${phone}`;
 
             try {
                 const response = await fetch(apiURL);
+                if(!response.ok) throw new Error("Proxy Error");
+                
                 const data = await response.json();
 
-                // Check if the API returned success and has a result array
                 if (data.success && data.result && data.result.length > 0) {
-                    
-                    // Loop through all results (since your API returns multiple records)
                     data.result.forEach((item, index) => {
                         const card = document.createElement('div');
                         card.className = "data-card";
                         card.innerHTML = `
-                            <p class="text-blue-300 text-[10px] font-bold">RECORD #${index + 1}</p>
-                            <p class="text-sm mt-1">👤 <span class="text-gray-400">NAME:</span> ${item.name || 'N/A'}</p>
-                            <p class="text-sm">🆔 <span class="text-gray-400">CNIC:</span> ${item.cnic || 'N/A'}</p>
-                            <p class="text-sm">🏠 <span class="text-gray-400">ADDR:</span> ${item.address || 'N/A'}</p>
-                            <p class="text-xs text-gray-500 mt-1">📱 ${item.mobile || ''}</p>
+                            <div class="border-b border-blue-500/20 pb-2 mb-2 flex justify-between">
+                                <span class="text-blue-400 text-[10px] font-bold">RECORD #${index + 1}</span>
+                                <span class="text-gray-600 text-[10px]">${item.mobile}</span>
+                            </div>
+                            <p class="text-sm mb-1"><span class="text-gray-500 text-xs">NAME:</span> <span class="text-blue-100 font-semibold">${item.name || 'N/A'}</span></p>
+                            <p class="text-sm mb-1"><span class="text-gray-500 text-xs">CNIC:</span> <span class="text-blue-100">${item.cnic || 'N/A'}</span></p>
+                            <p class="text-sm"><span class="text-gray-500 text-xs">ADDR:</span> <span class="text-blue-100 leading-tight">${item.address || 'N/A'}</span></p>
                         `;
                         resContent.appendChild(card);
                     });
@@ -103,11 +106,11 @@
                     resContainer.classList.remove('hidden');
                     saveToHistory(phone, data.result[0].name || "Found");
                 } else {
-                    alert("No data found for this number in the database.");
+                    alert("No data found for: " + phone);
                 }
             } catch (error) {
                 console.error(error);
-                alert("Connection Error. Please check if the API is working.");
+                alert("Connection Error! Ensure you uploaded vercel.json correctly.");
             } finally {
                 btn.innerText = "FETCH DETAILS";
                 btn.disabled = false;
@@ -116,6 +119,8 @@
 
         function saveToHistory(num, name) {
             let history = JSON.parse(localStorage.getItem('f4x_history') || "[]");
+            // Prevent duplicate entries for the same number
+            history = history.filter(h => h.num !== num);
             history.unshift({ num, name, time: new Date().toLocaleTimeString() });
             if(history.length > 5) history.pop();
             localStorage.setItem('f4x_history', JSON.stringify(history));
@@ -126,137 +131,31 @@
             const list = document.getElementById('historyList');
             const history = JSON.parse(localStorage.getItem('f4x_history') || "[]");
             if(history.length === 0) {
-                list.innerHTML = `<p class="text-gray-600 text-xs italic">No logs found</p>`;
+                list.innerHTML = `<p class="text-gray-600 text-xs italic text-center py-4">No search history</p>`;
                 return;
             }
             list.innerHTML = history.map(item => `
-                <div class="history-item p-3 rounded-lg flex justify-between items-center">
+                <div class="history-item p-3 rounded-lg flex justify-between items-center transition-all hover:bg-slate-800">
                     <div>
-                        <p class="text-white font-bold text-sm">${item.num}</p>
-                        <p class="text-gray-500 text-[9px] uppercase">${item.name}</p>
+                        <p class="text-blue-400 font-bold text-sm leading-none mb-1">${item.num}</p>
+                        <p class="text-gray-500 text-[9px] uppercase tracking-wider">${item.name}</p>
                     </div>
-                    <button onclick="copyNum('${item.num}')" class="text-[10px] bg-slate-700 px-2 py-1 rounded hover:bg-blue-600 transition-colors">COPY</button>
+                    <button onclick="copyNum('${item.num}')" class="text-[10px] font-bold bg-blue-600/20 text-blue-400 border border-blue-500/30 px-3 py-1.5 rounded-md hover:bg-blue-600 hover:text-white transition-all">COPY</button>
                 </div>
             `).join('');
         }
 
         function copyNum(num) {
             navigator.clipboard.writeText(num);
-            alert("Number copied: " + num);
+            alert("Copied: " + num);
         }
 
         function clearHistory() {
-            localStorage.removeItem('f4x_history');
-            renderHistory();
-        }
-    </script>
-</body>
-</html>            </div>
-
-            <div id="result" class="mt-8 hidden space-y-3">
-                <div class="p-4 bg-slate-800 rounded-xl border border-slate-700">
-                    <p class="text-[10px] text-blue-400 font-bold uppercase">Search Result</p>
-                    <p id="resContent" class="text-sm text-gray-200 mt-2 whitespace-pre-wrap leading-relaxed"></p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Logs -->
-        <div class="glass p-6 rounded-2xl shadow-xl">
-            <h3 class="text-xs font-black text-gray-500 uppercase tracking-widest mb-4 flex justify-between items-center">
-                Recent Logs <span onclick="clearHistory()" class="text-red-500 cursor-pointer text-[10px] hover:underline">Clear All</span>
-            </h3>
-            <div id="historyList" class="space-y-2"></div>
-        </div>
-    </div>
-
-    <script>
-        const PASSWORD = "FREE";
-
-        function checkPass() {
-            if (document.getElementById('passInput').value === PASSWORD) {
-                document.getElementById('auth-overlay').style.display = 'none';
-                document.getElementById('dashboard').style.display = 'block';
+            if(confirm("Clear all logs?")) {
+                localStorage.removeItem('f4x_history');
                 renderHistory();
-            } else { alert("Access Denied"); }
-        }
-
-        async function searchData() {
-            const phone = document.getElementById('phoneInput').value;
-            if(!phone) return alert("Enter a number!");
-
-            const btn = document.getElementById('searchBtn');
-            const resDiv = document.getElementById('result');
-            
-            btn.innerText = "CONNECTING...";
-            btn.disabled = true;
-            resDiv.classList.add('hidden');
-
-            // This now points to your local Vercel proxy
-            const apiURL = `/api/lookup?phone=${phone}`;
-
-            try {
-                const response = await fetch(apiURL);
-                
-                if (!response.ok) throw new Error(`Server Error: ${response.status}`);
-                
-                const data = await response.json();
-
-                if(data && !data.error && (data.name || data.cnic)) {
-                    const info = `👤 NAME: ${data.name || 'N/A'}\n🆔 CNIC: ${data.cnic || 'N/A'}\n🏠 ADDR: ${data.address || 'N/A'}`;
-                    document.getElementById('resContent').innerText = info;
-                    resDiv.classList.remove('hidden');
-                    
-                    saveToHistory(phone, data.name || "Unknown");
-                } else {
-                    alert("No data found for this number.");
-                }
-            } catch (error) {
-                console.error(error);
-                alert("Error: " + error.message + "\nCheck if the API provider is down.");
-            } finally {
-                btn.innerText = "FETCH DETAILS";
-                btn.disabled = false;
             }
-        }
-
-        function saveToHistory(num, name) {
-            let history = JSON.parse(localStorage.getItem('f4x_history') || "[]");
-            history.unshift({ num, name, time: new Date().toLocaleTimeString() });
-            if(history.length > 5) history.pop();
-            localStorage.setItem('f4x_history', JSON.stringify(history));
-            renderHistory();
-        }
-
-        function renderHistory() {
-            const list = document.getElementById('historyList');
-            const history = JSON.parse(localStorage.getItem('f4x_history') || "[]");
-            
-            if(history.length === 0) {
-                list.innerHTML = `<p class="text-gray-600 text-xs italic">No logs found</p>`;
-                return;
-            }
-
-            list.innerHTML = history.map(item => `
-                <div class="history-item p-3 rounded-lg flex justify-between items-center">
-                    <div>
-                        <p class="text-white font-bold text-sm">${item.num}</p>
-                        <p class="text-gray-500 text-[9px] uppercase">${item.name}</p>
-                    </div>
-                    <button onclick="copyNum('${item.num}')" class="text-[10px] bg-slate-700 px-2 py-1 rounded hover:bg-blue-600 transition-colors">COPY</button>
-                </div>
-            `).join('');
-        }
-
-        function copyNum(num) {
-            navigator.clipboard.writeText(num);
-            alert("Number copied: " + num);
-        }
-
-        function clearHistory() {
-            localStorage.removeItem('f4x_history');
-            renderHistory();
         }
     </script>
 </body>
-</html>
+                    </html>
