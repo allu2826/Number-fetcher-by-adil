@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Pro | MADE BY F4X ADIL</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: #0f172a; color: white; font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
+        #auth-overlay { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; background: #0f172a; }
+        #dashboard { display: none; }
+        .glow:focus { box-shadow: 0 0 15px #3b82f6; outline: none; }
+        .history-item { background: rgba(255,255,255,0.05); border-left: 3px solid #3b82f6; }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div id="auth-overlay">
+        <div class="glass p-8 rounded-2xl w-full max-w-sm text-center shadow-2xl mx-4">
+            <h2 class="text-xl font-bold text-blue-400 mb-4">🔐 SYSTEM LOCKED</h2>
+            <input id="passInput" type="password" placeholder="Enter Password..." class="w-full p-4 rounded-lg bg-slate-900 border border-slate-700 text-white text-center mb-4 glow">
+            <button onclick="checkPass()" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-lg font-bold">UNLOCK ACCESS</button>
+        </div>
+    </div>
+
+    <div id="dashboard" class="w-full max-w-md space-y-6">
+        <div class="glass p-8 rounded-2xl shadow-2xl">
+            <h1 class="text-2xl font-bold text-center mb-1 text-blue-400">MADE BY F4X ADIL</h1>
+            <p class="text-gray-400 text-center text-[10px] mb-8 tracking-[0.2em] uppercase">Premium Data Interface</p>
+            
+            <div class="space-y-4">
+                <input id="phoneInput" type="text" placeholder="Enter Number (03XXXXXXXXX)" class="w-full p-4 rounded-lg bg-slate-900 border border-slate-700 text-white glow">
+                <button id="searchBtn" onclick="searchData()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-lg shadow-lg">FETCH DETAILS</button>
+            </div>
+
+            <div id="result" class="mt-8 hidden space-y-3">
+                <div class="p-4 bg-slate-800 rounded-xl border border-slate-700">
+                    <p class="text-[10px] text-blue-400 font-bold uppercase">Search Result</p>
+                    <p id="resContent" class="text-sm text-gray-200 mt-2 whitespace-pre-wrap leading-relaxed"></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass p-6 rounded-2xl shadow-xl">
+            <h3 class="text-xs font-black text-gray-500 uppercase tracking-widest mb-4 flex justify-between items-center">
+                Recent Logs <span onclick="clearHistory()" class="text-red-500 cursor-pointer text-[10px] hover:underline">Clear All</span>
+            </h3>
+            <div id="historyList" class="space-y-2"></div>
+        </div>
+    </div>
+
+    <script>
+        const PASSWORD = "FREE";
+
+        function checkPass() {
+            if (document.getElementById('passInput').value === PASSWORD) {
+                document.getElementById('auth-overlay').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                renderHistory();
+            } else { alert("Access Denied"); }
+        }
+
+        async function searchData() {
+            const phone = document.getElementById('phoneInput').value;
+            if(!phone) return alert("Enter a number!");
+
+            const btn = document.getElementById('searchBtn');
+            btn.innerText = "CONNECTING...";
+            btn.disabled = true;
+
+            // Proxy REMOVED as requested for hosting
+            const apiURL = `https://howler-database-api.vercel.app/api/lookup?phone=${phone}`;
+
+            try {
+                const response = await fetch(apiURL);
+                const data = await response.json();
+
+                if(data && !data.error) {
+                    const info = `👤 NAME: ${data.name || 'N/A'}\n🆔 CNIC: ${data.cnic || 'N/A'}\n🏠 ADDR: ${data.address || 'N/A'}`;
+                    document.getElementById('resContent').innerText = info;
+                    document.getElementById('result').classList.remove('hidden');
+                    
+                    saveToHistory(phone, data.name || "Unknown");
+                } else {
+                    alert("No data found for this number.");
+                }
+            } catch (error) {
+                alert("API Error: Make sure your hosting allows cross-site requests.");
+            } finally {
+                btn.innerText = "FETCH DETAILS";
+                btn.disabled = false;
+            }
+        }
+
+        function saveToHistory(num, name) {
+            let history = JSON.parse(localStorage.getItem('f4x_history') || "[]");
+            history.unshift({ num, name, time: new Date().toLocaleTimeString() });
+            if(history.length > 5) history.pop();
+            localStorage.setItem('f4x_history', JSON.stringify(history));
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('historyList');
+            const history = JSON.parse(localStorage.getItem('f4x_history') || "[]");
+            
+            if(history.length === 0) {
+                list.innerHTML = `<p class="text-gray-600 text-xs italic">No logs found</p>`;
+                return;
+            }
+
+            list.innerHTML = history.map(item => `
+                <div class="history-item p-3 rounded-lg flex justify-between items-center">
+                    <div>
+                        <p class="text-white font-bold text-sm">${item.num}</p>
+                        <p class="text-gray-500 text-[9px] uppercase">${item.name}</p>
+                    </div>
+                    <button onclick="copyNum('${item.num}')" class="text-[10px] bg-slate-700 px-2 py-1 rounded hover:bg-blue-600 transition-colors">COPY</button>
+                </div>
+            `).join('');
+        }
+
+        function copyNum(num) {
+            navigator.clipboard.writeText(num);
+            alert("Number copied: " + num);
+        }
+
+        function clearHistory() {
+            localStorage.removeItem('f4x_history');
+            renderHistory();
+        }
+    </script>
+</body>
+</html>
