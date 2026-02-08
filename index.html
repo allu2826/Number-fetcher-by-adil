@@ -62,36 +62,36 @@
         }
 
         async function searchData() {
-            const phone = document.getElementById('phoneInput').value;
-            if(!phone) return alert("Enter a number!");
+    const phone = document.getElementById('phoneInput').value;
+    if(!phone) return alert("Enter a number!");
 
-            const btn = document.getElementById('searchBtn');
-            btn.innerText = "CONNECTING...";
-            btn.disabled = true;
+    const btn = document.getElementById('searchBtn');
+    btn.innerText = "BYPASSING SECURITY...";
+    btn.disabled = true;
 
-            // Proxy REMOVED as requested for hosting
-            const apiURL = `https://howler-database-api.vercel.app/api/lookup?phone=${phone}`;
+    // POINT TO YOUR NEW VERCEL API ROUTE
+    const apiURL = `/api/lookup?phone=${phone}`;
 
-            try {
-                const response = await fetch(apiURL);
-                const data = await response.json();
+    try {
+        const response = await fetch(apiURL);
+        const data = await response.json();
 
-                if(data && !data.error) {
-                    const info = `👤 NAME: ${data.name || 'N/A'}\n🆔 CNIC: ${data.cnic || 'N/A'}\n🏠 ADDR: ${data.address || 'N/A'}`;
-                    document.getElementById('resContent').innerText = info;
-                    document.getElementById('result').classList.remove('hidden');
-                    
-                    saveToHistory(phone, data.name || "Unknown");
-                } else {
-                    alert("No data found for this number.");
-                }
-            } catch (error) {
-                alert("API Error: Make sure your hosting allows cross-site requests.");
-            } finally {
-                btn.innerText = "FETCH DETAILS";
-                btn.disabled = false;
-            }
+        if(data && !data.error) {
+            const info = `👤 NAME: ${data.name || 'N/A'}\n🆔 CNIC: ${data.cnic || 'N/A'}\n🏠 ADDR: ${data.address || 'N/A'}`;
+            document.getElementById('resContent').innerText = info;
+            document.getElementById('result').classList.remove('hidden');
+            saveToHistory(phone, data.name || "Unknown");
+        } else {
+            alert("No data found.");
         }
+    } catch (error) {
+        alert("System Error. Try redeploying to Vercel.");
+    } finally {
+        btn.innerText = "FETCH DETAILS";
+        btn.disabled = false;
+    }
+}
+
 
         function saveToHistory(num, name) {
             let history = JSON.parse(localStorage.getItem('f4x_history') || "[]");
