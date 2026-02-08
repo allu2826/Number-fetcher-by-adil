@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/lookup",
+      "destination": "https://howler-database-api.vercel.app/api/lookup"
+    }
+  ]
+}
