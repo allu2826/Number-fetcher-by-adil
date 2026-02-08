@@ -66,26 +66,28 @@
     if(!phone) return alert("Enter a number!");
 
     const btn = document.getElementById('searchBtn');
-    btn.innerText = "BYPASSING SECURITY...";
+    const resContent = document.getElementById('resContent');
+    
+    btn.innerText = "BYPASSING BLOCKS...";
     btn.disabled = true;
 
-    // POINT TO YOUR NEW VERCEL API ROUTE
-    const apiURL = `/api/lookup?phone=${phone}`;
+    // IMPORTANT: We now call our OWN internal Vercel API
+    const localApi = `/api/lookup?phone=${phone}`;
 
     try {
-        const response = await fetch(apiURL);
+        const response = await fetch(localApi);
         const data = await response.json();
 
         if(data && !data.error) {
             const info = `👤 NAME: ${data.name || 'N/A'}\n🆔 CNIC: ${data.cnic || 'N/A'}\n🏠 ADDR: ${data.address || 'N/A'}`;
-            document.getElementById('resContent').innerText = info;
+            resContent.innerText = info;
             document.getElementById('result').classList.remove('hidden');
             saveToHistory(phone, data.name || "Unknown");
         } else {
-            alert("No data found.");
+            alert("No data found for this number.");
         }
     } catch (error) {
-        alert("System Error. Try redeploying to Vercel.");
+        alert("Server Error: Check your Vercel logs.");
     } finally {
         btn.innerText = "FETCH DETAILS";
         btn.disabled = false;
